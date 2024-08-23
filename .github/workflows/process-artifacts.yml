@@ -36,15 +36,16 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts
-          asset_name: processed-artifacts.zip
-          asset_content_type: application/zip
+      - name: Upload Release Assets
+        run: |
+          for file in artifacts/*.node; do
+            filename=$(basename "$file")
+            echo "Uploading $filename"
+            curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                 -H "Content-Type: application/octet-stream" \
+                 --data-binary @"$file" \
+                 "${{ steps.create_release.outputs.upload_url }}?name=$filename"
+          done
 
       - name: Clean up
         run: rm -rf artifacts
